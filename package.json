@@ -1,0 +1,27 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@ant-design-vue/nuxt": "^1.4.2",
+    "@ant-design/icons-vue": "^7.0.1",
+    "@nuxt/kit": "^3.13.0",
+    "@pinia/nuxt": "^0.5.4",
+    "ant-design-vue": "^4.2.3",
+    "axios": "^1.7.5",
+    "nuxt": "^3.12.4",
+    "pinia": "^2.2.2",
+    "radix-vue": "^1.9.4",
+    "vue": "latest"
+  },
+  "devDependencies": {
+    "@nuxtjs/color-mode": "^3.4.4"
+  }
+}
