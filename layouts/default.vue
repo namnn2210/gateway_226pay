@@ -11,6 +11,7 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 
 // Check if the current route is /login
+console.log('current route: ', route.path)
 const isLoginPage = route.path === '/login'
 </script>
 

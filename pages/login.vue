@@ -66,8 +66,10 @@ const disabled = computed(() => {
   return !(formState.username && formState.password);
 });
 
+
 const login = async () => {
   try {
+    console.log('logging in...')
     await authStore.login(formState.username, formState.password)
     formState.username = ''
     formState.password = ''

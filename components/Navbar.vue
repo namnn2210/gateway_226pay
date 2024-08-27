@@ -4,7 +4,7 @@
       <!-- Logo Section -->
       <a-flex>
         <div class="logo">
-          <img src="/new-logo.png" alt="Logo"/>
+          <img src="/logo.png" alt="Logo"/>
         </div>
       </a-flex>
 
@@ -34,7 +34,7 @@
           <template #overlay>
             <a-menu>
               <a-menu-item>
-                <NuxtLink to="/">Withdrawal</NuxtLink>
+                <NuxtLink to="/withdrawal">Withdrawal</NuxtLink>
               </a-menu-item>
               <a-menu-item>
                 <NuxtLink to="/">Settle</NuxtLink>
@@ -80,17 +80,15 @@
       <!-- Avatar Section -->
       <a-flex class="desktop-menu" gap="middle" align="center">
         <a-dropdown :trigger="['click']" :placement="bottomRight" :arrow="{ pointAtCenter: true }">
-          <a-avatar :size="{ xs: 24 }">
-            <template #icon>
-              <AntDesignOutlined />
-            </template>
+          <a-avatar size="large" :style="{ backgroundColor: color, verticalAlign: 'middle' }" :gap="gap">
+            {{ avatarValue }}
           </a-avatar>
           <template #overlay>
             <a-menu>
               <a-menu-item>
                 <NuxtLink to="/">Thông tin tài khoản</NuxtLink>
               </a-menu-item>
-              <a-menu-item>
+              <a-menu-item >
                 <NuxtLink to="/">Đăng xuất</NuxtLink>
               </a-menu-item>
             </a-menu>
@@ -101,10 +99,24 @@
   </a-layout-header>
 </template>
 
-<script>
-export default {
-  name: 'Navbar',
-}
+<script setup lang="ts">
+
+import { ref, onMounted } from 'vue';
+import { useAuthStore } from '@/stores/auth'; // Import your Pinia store
+
+// Use the auth store to get user information
+const authStore = useAuthStore();
+
+// Avatar value
+const avatarValue = ref('');
+
+onMounted(() => {
+  authStore.loadUserFromLocalStorage(); // Load user from local storage
+  // Set avatarValue to the user's initials if user is present
+  if (authStore.user?.username) {
+    avatarValue.value = authStore.user.username.split(' ').map(n => n[0]).join(''); // 'JD' for 'John Doe'
+  }
+});
 </script>
 
 <style scoped>

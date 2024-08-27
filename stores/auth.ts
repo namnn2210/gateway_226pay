@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
-import { useNuxtApp, navigateTo } from '#app'
+import { navigateTo } from '#app'
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
@@ -10,60 +9,76 @@ export const useAuthStore = defineStore('auth', {
         apiBaseUrl: useRuntimeConfig().public.apiBase, // Get the API URL from runtime config
     }),
     actions: {
+
         async login(username: string, password: string) {
-            const { $isClient } = useNuxtApp()
+
             try {
-                const response = await axios.post(`${this.apiBaseUrl}/api/login`, {
-                    username,
-                    password,
-                })
+                // Use the fetch API for making the POST request
+                const response = await fetch(`${this.apiBaseUrl}/api/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                    })
+                });
 
-                const access_token = response.data.data.access_token
-                const user_info = response.data.data.user
-
-                if ($isClient) {
-                    // Save token and user to localStorage
-                    localStorage.setItem('token', access_token)
-                    localStorage.setItem('user', JSON.stringify(user_info))
+                if (response.status === 302) {
+                    console.warn('Redirect detected. Check your login logic.');
+                    return;
                 }
 
-                // Update the store state
-                this.isAuthenticated = true
-                this.user = user_info
-                this.token = access_token
+                // Check if the response is okay
+                if (!response.ok) {
+                    throw new Error('Invalid username or password');
+                }
 
+                const data = await response.json();
+                const token = data.data.token;
+                const user = data.data.user;
+
+
+                // Save token and user to localStorage
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(user));
+
+
+                // Update the store state
+                this.isAuthenticated = true;
+                this.user = user;
+                this.token = token;
+
+                // Optionally, navigate to the home page or another page after login
                 return navigateTo('/')
 
             } catch (error) {
-                throw new Error('Invalid username or password')
+                throw new Error('Invalid username or password');
             }
         },
         logout() {
-            const { $isClient } = useNuxtApp()
-            if ($isClient) {
-                // Clear token and user from localStorage
-                localStorage.removeItem('token')
-                localStorage.removeItem('user')
 
-            }
+
+            // Clear token and user from localStorage
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+
             // Update the store state
-            this.isAuthenticated = false
-            this.user = ''
-            this.token = ''
+            this.isAuthenticated = false;
+            this.user = '';
+            this.token = '';
 
         },
         loadUserFromLocalStorage() {
-            const { $isClient } = useNuxtApp()
-            // Ensure localStorage is only accessed in the client
-            if ($isClient) {
-                const token = localStorage.getItem('token')
-                const storedUser = localStorage.getItem('user')
-                if (token && storedUser) {
-                    this.isAuthenticated = true
-                    this.user = JSON.parse(storedUser)
-                    this.token = token
-                }
+            const token = localStorage.getItem('token');
+            const storedUser = localStorage.getItem('user');
+            if (token && storedUser) {
+                this.isAuthenticated = true;
+                this.user = JSON.parse(storedUser);
+                this.token = token;
             }
+
         }
     }
 })
