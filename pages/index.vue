@@ -3,7 +3,7 @@
     <a-card class="stat-card">
       <a-statistic title="Total" :value="totalFinal" style="margin-right: 50px"/>
       <a-row :gutter="18">
-        <a-col :span="9">
+        <a-col :span="12">
           <a-statistic
             :value="amountIn"
             :precision="2"
@@ -15,7 +15,7 @@
             </template>
           </a-statistic>
         </a-col>
-        <a-col :span="10">
+        <a-col :span="12">
           <a-statistic
             :value="amountOut"
             :precision="2"
@@ -299,8 +299,21 @@ const fetchAmountToday = async () => {
 };
 
 // Method to toggle the switch for a specific row
-const toggleSwitch = (record, checked) => {
-  record.isChecked = checked;  // Toggle the isChecked field for the clicked row
+const toggleSwitch = async (record, checked) => {
+  record.isChecked = checked;
+  try {
+    const accessToken = localStorage.getItem('token');
+    await axios.post(`${apiUrl}/bank/toggle_bank_status`, {
+      id: record.id,
+    }, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    console.log(`Account ${record.id} status updated successfully.`);
+  } catch (error) {
+    console.error(`Error updating account ${record.id} status:`, error);
+  }
 };
 
 // Start polling every 15 seconds when the component is mounted
