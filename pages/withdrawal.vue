@@ -105,7 +105,7 @@
                 <b>Auto/Manual: </b> {{ record.is_auto ? 'Auto' : 'Manual' }}
               </p>
               <p>
-                <b>Action: </b> <a-button type="primary" @click="showPayModal" style="background-color: green;">Pay</a-button> <a-button type="primary" danger>Delete</a-button> <a-button type="primary" style="background-color: yellow; color:black;">Move</a-button>
+                <b>Action: </b> <a-button type="primary" @click="showPayModal" style="background-color: green;">Pay</a-button> <a-button type="primary" @click="handleDelete(record)" danger>Delete</a-button> <a-button type="primary" @click="handleMove(record)" style="background-color: yellow; color:black;">Move</a-button>
                 <a-modal v-model:open="payOpen" title="Payout Detail">
                   <template #footer>
                     <a-button key="back" @click="handleReport(record)" danger>Report</a-button>
@@ -240,6 +240,34 @@ const handleReport = (record) => {
     content: 'This cannot be undone',
     async onOk() {
       await updatePayout(record, 'report')
+    },
+    onCancel() {
+      console.log('Cancel');
+    },
+  });
+}
+
+const handleDelete = (record) => {
+  Modal.confirm({
+    title: 'Are you sure delete this payout?',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: 'This cannot be undone',
+    async onOk() {
+      await deletePayout(record)
+    },
+    onCancel() {
+      console.log('Cancel');
+    },
+  });
+}
+
+const handleMove = (record) => {
+  Modal.confirm({
+    title: 'Are you sure move this payout?',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: 'This cannot be undone',
+    async onOk() {
+      await movePayout(record)
     },
     onCancel() {
       console.log('Cancel');
@@ -445,7 +473,69 @@ const updatePayout = async (record, updateType) => {
   }
 };
 
+const deletePayout = async (record) => {
+  try {
+    const accessToken = localStorage.getItem('token'); // Ensure access token is retrieved
+    const deleteData = {
+      id:record.id
+    }
 
+    const response = await axios.post(
+      `${apiUrl}/payout/delete_payout`,
+      deleteData,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`, // Include authorization header
+        },
+      }
+    );
+
+    if (response.status === 200) {
+      notification['success']({
+        message: 'Success',
+        description: `Payout is deleted!`,
+      });
+
+      // Reload the page after a short delay for user feedback
+      // processBankOpen.value = false;
+      await fetchPayouts();
+    }
+  } catch (error) {
+    console.error('Error updating payout:', error);
+  }
+}
+
+const movePayout = async (record) => {
+  try {
+    const accessToken = localStorage.getItem('token'); // Ensure access token is retrieved
+    const deleteData = {
+      id:record.id
+    }
+
+    const response = await axios.post(
+      `${apiUrl}/payout/move_payout`,
+      deleteData,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`, // Include authorization header
+        },
+      }
+    );
+
+    if (response.status === 200) {
+      notification['success']({
+        message: 'Success',
+        description: `Payout is moved to settle!`,
+      });
+
+      // Reload the page after a short delay for user feedback
+      // processBankOpen.value = false;
+      await fetchPayouts();
+    }
+  } catch (error) {
+    console.error('Error updating payout:', error);
+  }
+}
 </script>
 
 <style scoped>
