@@ -3,8 +3,8 @@
     <a-flex justify="center">
       <a-card class="payout-card" title="Payout">
         <a-button type="primary" @click="addPayouttModal">Add Payout</a-button>
-        <a-modal v-model:open="open" title="Add New Payout" :confirm-loading="confirmLoading" @ok="handleOk">
-          <AddPayout/>
+        <a-modal v-model:open="open" title="Add New Payout" :confirm-loading="confirmLoading" footer="">
+          <AddPayout @submit="handlePayoutSubmit"/>
         </a-modal>
         <a-flex >
           <a-form 
@@ -47,6 +47,7 @@
               <a-col :span="isMobile ? 24 : 12">
                 <a-form-item label="User">
                   <a-select v-model:value="formState[`employee`]" style="width: 100%">
+                    <a-select-option value='All'>All</a-select-option>
                     <a-select-option v-for="user in users" :key="user.id" :value="user.username">
                       {{ user.username }}
                     </a-select-option>
@@ -104,7 +105,29 @@
                 <b>Auto/Manual: </b> {{ record.is_auto ? 'Auto' : 'Manual' }}
               </p>
               <p>
-                <b>Action: </b> <a-button type="primary" style="background-color: green;">Pay</a-button> <a-button type="primary" danger>Delete</a-button> <a-button type="primary" style="background-color: yellow; color:black;">Move</a-button>
+                <b>Action: </b> <a-button type="primary" @click="showPayModal" style="background-color: green;">Pay</a-button> <a-button type="primary" danger>Delete</a-button> <a-button type="primary" style="background-color: yellow; color:black;">Move</a-button>
+                <a-modal v-model:open="payOpen" title="Payout Detail">
+                  <template #footer>
+                    <a-button key="back" @click="handleReport(record)" danger>Report</a-button>
+                    <a-button key="back" @click="handleCancel(record)">Cancel</a-button>
+                    <a-button key="submit" type="primary" :loading="payLoading" @click="showProcessBankModal">Done</a-button>
+                    <a-modal v-if="listBanks.length" v-model:open="processBankOpen" title="Process Bank">
+                      <template #footer>
+                        <a-button key="submit" type="primary" :loading="processBankLoading" @click="handleDone(record)">Done</a-button>
+                      </template>
+                      <!-- Only render the select dropdown if banks are loaded -->
+                      <a-select v-if="listBanks.length" v-model="processBank" style="width: 100%">
+                        <a-select-option value=1>ACB</a-select-option>
+                        <a-select-option value=2>MB</a-select-option>
+                        <a-select-option value=3>Techcombank</a-select-option>
+                        <a-select-option value=4>Vietinbank</a-select-option>
+                      </a-select>
+                    </a-modal>
+                  </template>
+                  <p class='qrCode'>
+                    <img :src="generateQrCodeUrl(record)" alt="QR Code" style="width: 100%;"/>
+                  </p>
+                </a-modal>
               </p>
             </a-flex>
           </a-flex>
@@ -129,13 +152,21 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, onMounted } from 'vue';
+import { ExclamationCircleOutlined } from '@ant-design/icons-vue';
+import { Modal } from 'ant-design-vue';
+import { reactive, ref, onMounted, createVNode } from 'vue';
 import { SearchOutlined } from '@ant-design/icons-vue';
 import { useWindowSize } from '@vueuse/core';  // Use VueUse to detect window size
 import { useAuthStore } from '@/stores/auth'; // Import your Pinia store
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { useRuntimeConfig } from '#app';
+import { notification } from 'ant-design-vue';
+
+let totalResults = ref(0);
+let totalAmount = ref<number>(0);
+let listPayouts = ref([]);
+let listBanks = ref([]);
 
 // Use the auth store to get user information
 const authStore = useAuthStore();
@@ -143,18 +174,78 @@ const authStore = useAuthStore();
 const { width } = useWindowSize();
 const isMobile = ref(false);
 const open = ref<boolean>(false);
+const payOpen = ref<boolean>(false);
+const processBankOpen = ref<boolean>(false);
 const confirmLoading = ref<boolean>(false);
 const config = useRuntimeConfig();
 const apiUrl = config.public.apiBase;
-
-let totalResults = ref(0);
-let totalAmount = ref<number>(0);
-let listPayouts = ref([]);
 const users = ref<Array<{ id: number, username: string }>>([]);
 const expandedRowKey = ref<number | null>(null); // Stores the expanded row's key
 const loading = ref(false);
+const payLoading = ref(false);
+const processBankLoading = ref(false);
+const processBank = ref(1);
+const addPayoutRef = ref(null);
 
+const showPayModal = () => {
+  payOpen.value = true;
+};
+const showProcessBankModal = async () => {
+  processBankOpen.value = true;
+  await fetchBanks();
+  payOpen.value = false;
+};
 
+const generateQrCodeUrl = (record) => {
+  const bankcode = record.bankcode;
+  const accountno = record.accountno;
+  const money = record.money;
+  const accountname = encodeURIComponent(record.accountname);  // URL-encode the account name for safety
+  return `https://img.vietqr.io/image/${bankcode}-${accountno}-print.jpg?amount=${money}&addInfo=Z${accountname}&accountName=${accountname}`;
+};
+
+const handleDone = async (record) => {
+  console.log(processBank.value)
+  if (!processBank.value || !record.id) {
+    notification['error']({
+      message: 'Error',
+      description: 'Please select a valid bank and ensure the record is valid.',
+    });
+    return;
+  }
+
+  processBankLoading.value = true;
+  await updatePayout(record, 'done');  // Pass 'done' as the update type
+  processBankLoading.value = false;
+};
+
+const handleCancel = (record) => {
+  Modal.confirm({
+    title: 'Are you sure cancel this payout?',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: 'This cannot be undone',
+    async onOk() {
+      await updatePayout(record, 'cancel')
+    },
+    onCancel() {
+      console.log('Cancel');
+    },
+  });
+};
+
+const handleReport = (record) => {
+  Modal.confirm({
+    title: 'Are you sure report this payout?',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: 'This cannot be undone',
+    async onOk() {
+      await updatePayout(record, 'report')
+    },
+    onCancel() {
+      console.log('Cancel');
+    },
+  });
+}
 
 const layout = {
   labelCol: { span: 24 },
@@ -166,6 +257,7 @@ onMounted(async () => {
   // Set mobile view threshold
   isMobile.value = width.value < 768; // Consider mobile for screens under 768px
   await fetchUsers();
+  await fetchPayouts();
 });
 
 const formState = reactive({
@@ -176,7 +268,7 @@ const formState = reactive({
   ],
   text: '',
   status: 'Pending',
-  employee: '',
+  employee: 'All',
 });
 
 const payoutColumns = [
@@ -215,13 +307,37 @@ const addPayouttModal = () => {
   open.value = true;
 };
 
-const handleOk = () => {
-  confirmLoading.value = true;
-  setTimeout(() => {
-    open.value = false;
+const handlePayoutSubmit = async (formData) => {
+  try {
+    confirmLoading.value = true;
+    
+    const accessToken = localStorage.getItem('token'); // Retrieve the access token
+    const response = await axios.post(`${apiUrl}/payout/add`, formData, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`, // Add authorization token
+      },
+    });
+
+    if (response.status === 200) {
+      notification['success']({
+        message: 'Success',
+        description: 'Payout added successfully!',
+      });
+      open.value = false; // Close the modal
+      await fetchPayouts(); // Refresh the payout list
+    }
+  } catch (error) {
+    console.error('Error adding payout:', error);
+    notification['error']({
+      message: 'Error',
+      description: 'An error occurred while adding the payout.',
+    });
+  } finally {
     confirmLoading.value = false;
-  }, 2000);
+  }
 };
+
+
 
 // Function to fetch users from API
 const fetchUsers = async () => {
@@ -235,6 +351,26 @@ const fetchUsers = async () => {
     users.value = response.data.data.list_users; // Assuming the API returns { data: [users] }
   } catch (error) {
     console.error('Error fetching users:', error);
+  }
+};
+
+const fetchBanks = async () => {
+  try {
+    const accessToken = localStorage.getItem('token'); // Ensure access token is retrieved
+    const response = await axios.get(`${apiUrl}/bank/get_banks`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`, // Include authorization header
+      },
+    });
+    
+    if (response.data.data.list_banks) {
+      listBanks.value = response.data.data.list_banks; // Ensure banks are populated
+      console.log('Banks fetched successfully:', listBanks.value);  // Add this to check the data
+    } else {
+      console.error('No banks found');
+    }
+  } catch (error) {
+    console.error('Error fetching banks:', error);
   }
 };
 
@@ -257,7 +393,7 @@ const fetchPayouts = async () => {
       params
     });
     let payouts = response.data.data.list_payouts
-    console.log(response.data.data.list_payouts);
+
     listPayouts.value = response.data.data.list_payouts
     totalResults.value = payouts.length;
     totalAmount.value = payouts.reduce((acc, payout) => acc + payout.money, 0);
@@ -267,6 +403,48 @@ const fetchPayouts = async () => {
     loading.value = false;  // Stop loading after the request finishes
   }
 }
+
+const updatePayout = async (record, updateType) => {
+  try {
+    const accessToken = localStorage.getItem('token'); // Ensure access token is retrieved
+    let updateData = {};
+
+    if (updateType !== 'done') {
+      updateData = { id: record.id }; // For non-done actions (cancel, report)
+    } else {
+      updateData = {
+        id: record.id,
+        bank_id: processBank.value,  // Include bank ID for 'done'
+      };
+    }
+
+    const response = await axios.post(
+      `${apiUrl}/payout/update_payout/${updateType}`,
+      updateData,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`, // Include authorization header
+        },
+      }
+    );
+
+    if (response.status === 200) {
+      let updateText = updateType === 'report' ? 'reported' : 
+                       updateType === 'cancel' ? 'canceled' : 'processed successfully';
+      notification['success']({
+        message: 'Success',
+        description: `Payout is ${updateText}!`,
+      });
+
+      // Reload the page after a short delay for user feedback
+      processBankOpen.value = false;
+      await fetchPayouts();
+    }
+  } catch (error) {
+    console.error('Error updating payout:', error);
+  }
+};
+
 
 </script>
 
