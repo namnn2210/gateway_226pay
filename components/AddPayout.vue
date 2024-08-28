@@ -31,10 +31,9 @@
     </a-form-item>
     <a-form-item :name="['bankcode']" label="Bank Name">
       <a-select v-model:value="formState.bankcode">
-        <a-select-option value="ACB">ACB</a-select-option>
-        <a-select-option value="MB">MB</a-select-option>
-        <a-select-option value="Techcombank">Techcombank</a-select-option>
-        <a-select-option value="Vietinbank">Vietinbank</a-select-option>
+        <a-select-option v-for="bank in listBanks" :value="bank.name">
+          {{ bank.name }}
+        </a-select-option>
       </a-select>
     </a-form-item>
 
@@ -44,7 +43,18 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, defineEmits } from 'vue';
+import { reactive, ref, defineEmits, onMounted } from 'vue';
+import axios from 'axios';
+import { useRuntimeConfig } from '#app';
+const config = useRuntimeConfig();
+const apiUrl = config.public.apiBase;
+const authStore = useAuthStore();
+let listBanks = ref([]);
+
+onMounted(async () => {
+  authStore.loadUserFromLocalStorage();
+  await fetchBanks();
+});
 
 const layout = {
   labelCol: { span: 8 },
@@ -75,4 +85,25 @@ const onFinish = () => {
   emit('submit', { ...formState });
   console.log('Form submitted:', formState);
 };
+
+const fetchBanks = async () => {
+  try {
+    const accessToken = localStorage.getItem('token'); // Ensure access token is retrieved
+    const response = await axios.get(`${apiUrl}/bank/get_banks`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`, // Include authorization header
+      },
+    });
+    
+    if (response.data.data.list_banks) {
+      listBanks.value = response.data.data.list_banks; // Ensure banks are populated
+      console.log('Banks fetched successfully:', listBanks.value);  // Add this to check the data
+    } else {
+      console.error('No banks found');
+    }
+  } catch (error) {
+    console.error('Error fetching banks:', error);
+  }
+};
+
 </script>

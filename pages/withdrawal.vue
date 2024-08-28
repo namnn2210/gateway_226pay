@@ -185,7 +185,6 @@ const loading = ref(false);
 const payLoading = ref(false);
 const processBankLoading = ref(false);
 const processBank = ref(1);
-const addPayoutRef = ref(null);
 
 const showPayModal = () => {
   payOpen.value = true;
@@ -308,8 +307,8 @@ const payoutColumns = [
     key: 'status',
     customRender: ({ status }: { status: boolean }) => {
       return status 
-        ? h('a-tag', { color: 'success' }, { default: () => 'DONE' })
-        : h('a-tag', { color: 'processing' }, { default: () => 'PENDING' });
+        ? createVNode('a-tag', { color: 'success' }, { default: () => 'DONE' })
+        : createVNode('a-tag', { color: 'processing' }, { default: () => 'PENDING' });
     }
   },
 ];
