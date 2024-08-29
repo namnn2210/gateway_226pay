@@ -31,15 +31,15 @@
     </a-card>
     <a-card class="stat-card">
       <a-table :columns="depositColumns" :data-source="employeeDeposit" class="table-wrapper"
-               :expand-column-width="100">
+               :expand-column-width="100" style="font-size: 11px;">
         <template #expandedRowRender="{ record }">
           <a-flex justify="flex-start" gap="middle" align="center">
-            <a-flex vertical>
+            <a-flex vertical style="font-size: 11px;">
               <p>
                 <b>Note: </b> {{ record.note }}
               </p>
               <p>
-                <b>Bank Name: </b> {{ record.bank_name }}
+                <b>Bank Name: </b> {{ record.bank_name.name }}
               </p>
               <p>
                 <b>Bank Code: </b> {{ record.bank_code }}
@@ -51,7 +51,7 @@
                 <b>Account Name: </b> {{ record.accountname }}
               </p>
             </a-flex>
-            <a-flex vertical>
+            <a-flex vertical style="font-size: 11px;">
               <p>
                 <b>Updated By: </b> {{ record.updated_by }}
               </p>
@@ -59,7 +59,7 @@
                 <b>Updated At: </b> {{ record.updated_at }}
               </p>
             </a-flex>
-            <a-flex gap="small">
+            <a-flex gap="small" style="font-size: 11px;">
               <b>Action: </b> <a-button type="primary" success>Pay</a-button> <a-button type="primary" danger>Delete</a-button>
             </a-flex>
           </a-flex>
@@ -81,7 +81,7 @@
           <AddBank @submit="handleFormSubmit"/>
         </a-modal>
       </a-flex>
-      <a-table :columns="bankAccountColumns" :data-source="bankAccountsIn" class="table-wrapper" row-key="id" size="middle">
+      <a-table :columns="bankAccountColumns" :data-source="bankAccountsIn" class="table-wrapper" row-key="id" size="middle" style="font-size: 11px;">
         <template #bodyCell="{ column, record }">
           <!-- Switch for IN accounts -->
           <template v-if="column.key === 'action'">
@@ -94,7 +94,7 @@
     <!-- Bank OUT Table -->
     <a-card class="stat-card">
       <a-statistic title="Bank OUT" :value="totalOut" style="margin-right: 50px"/>
-      <a-table :columns="bankAccountColumns" :data-source="bankAccountsOut" class="table-wrapper" row-key="id" size="middle">
+      <a-table :columns="bankAccountColumns" :data-source="bankAccountsOut" class="table-wrapper" row-key="id" size="middle" style="font-size: 11px;">
         <template #bodyCell="{ column, record }">
           <!-- Switch for OUT accounts -->
           <template v-if="column.key === 'action'">
@@ -109,13 +109,13 @@
     <a-card class="stat-card">
       <template #title>Latest IN Transaction History</template>
       <a-table :columns="latestTransactionHistoryColumns" :data-source="latestInTransactions" class="table-wrapper"
-               size="middle">
+               size="middle" style="font-size: 11px;">
       </a-table>
     </a-card>
     <a-card class="stat-card">
       <template #title>Latest OUT Transaction History</template>
       <a-table :columns="latestTransactionHistoryColumns" :data-source="latestOutTransactions" class="table-wrapper"
-               size="middle">
+               size="middle" style="font-size: 11px;">
       </a-table>
     </a-card>
   </a-flex>
@@ -127,6 +127,7 @@ import dayjs from 'dayjs';
 import axios from 'axios';
 import { useRuntimeConfig } from '#app';
 import AddBank from '@/components/AddBank.vue'
+import { useAuthStore } from '@/stores/auth';
 
 let transactionIntervalId: number | undefined;
 let depositIntervalId: number | undefined;
@@ -148,6 +149,7 @@ const config = useRuntimeConfig();
 const apiUrl = config.public.apiBase;
 const open = ref<boolean>(false);
 const confirmLoading = ref<boolean>(false);
+const authStore = useAuthStore();
 
 
 const addAccountModal = () => {
@@ -185,7 +187,14 @@ const depositColumns = [
 
 const bankAccountColumns = [
   { title: 'Account Number', dataIndex: 'account_number', key: 'account_number' },
-  { title: 'Bank Name', dataIndex: 'bank_name', key: 'bank_name' },
+  { 
+    title: 'Bank Name', 
+    dataIndex: 'bank_name', 
+    key: 'bank_name',
+    customRender: ({ record }) => {
+      return record.bank_name.name
+    }
+  },
   { 
     title: 'Balance', 
     dataIndex: 'balance', 
@@ -270,7 +279,8 @@ const fetchBankAccounts = async () => {
 
     bankAccountsIn.value = processBankAccounts(accounts.filter(account => account.bank_type === 'IN'));
     bankAccountsOut.value = processBankAccounts(accounts.filter(account => account.bank_type === 'OUT'));
-
+    console.log(bankAccountsIn);
+    console.log(bankAccountsOut);
     // Calculate totalIn and totalOut by summing the balances
     totalIn.value = bankAccountsIn.value.reduce((sum, account) => sum + account.balance, 0);
     totalOut.value = bankAccountsOut.value.reduce((sum, account) => sum + account.balance, 0);
@@ -316,12 +326,17 @@ const toggleSwitch = async (record, checked) => {
   }
 };
 
+import { useWindowSize } from '@vueuse/core'; 
+const { width } = useWindowSize();
 // Start polling every 15 seconds when the component is mounted
 onMounted(() => {
   fetchLatestTransactions();
   fetchEmployeeDeposit();
   fetchBankAccounts();
   fetchAmountToday();
+
+  authStore.loadUserFromLocalStorage();
+  console.log('====', width.value)
 
 
   transactionIntervalId = setInterval(fetchLatestTransactions, 15000);
@@ -372,12 +387,18 @@ onUnmounted(() => {
 }
 
 /* Optional media queries to adjust the layout for smaller screens */
-@media (min-width: 1280px) and (max-width: 1440px) {
+@media (max-width: 1439px) {
   .stat-card {
-    width: 650px; /* Take full width on mobile */
+    width: 600px; /* Take full width on mobile */
   }
-
 }
+
+@media (min-width: 1440px) {
+  .stat-card {
+    width: 700px; /* Take full width on mobile */
+  }
+}
+
 @media (max-width: 768px) {
   .stat-card {
     width: 100%; /* Take full width on mobile */

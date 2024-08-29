@@ -20,10 +20,13 @@
           <PieChartTwoTone/>
           <span class="button-text">Report</span>
         </a-button>
-        <a-button type="text" class="icon-button">
-          <BookTwoTone/>
-          <span class="button-text">Record Book</span>
-        </a-button>
+        <NuxtLink to="/record_book">
+          <a-button type="text" class="icon-button">
+            <BookTwoTone/>
+            <span class="button-text">Record Book</span>
+          </a-button>
+        </NuxtLink>
+        
 
         <!-- Payout Dropdown -->
         <a-dropdown :trigger="['click']" :placement="bottomRight" :arrow="{ pointAtCenter: true }">
@@ -52,7 +55,7 @@
           <template #overlay>
             <a-menu>
               <a-menu-item>
-                <NuxtLink to="/">Deposit</NuxtLink>
+                <NuxtLink to="/deposit">Deposit</NuxtLink>
               </a-menu-item>
             </a-menu>
           </template>

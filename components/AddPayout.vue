@@ -31,8 +31,8 @@
     </a-form-item>
     <a-form-item :name="['bankcode']" label="Bank Name">
       <a-select v-model:value="formState.bankcode">
-        <a-select-option v-for="bank in listBanks" :value="bank.name">
-          {{ bank.name }}
+        <a-select-option v-for="bank in listBanks" :value="bank.code">
+          {{ bank.short_name }}
         </a-select-option>
       </a-select>
     </a-form-item>
@@ -66,7 +66,7 @@ const validateMessages = {
 };
 
 const formState = reactive({
-  scode: '',
+  scode: '1',
   orderid: '',
   money: '',
   accountno: '',
