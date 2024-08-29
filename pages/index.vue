@@ -30,38 +30,17 @@
       </a-row>
     </a-card>
     <a-card class="stat-card">
-      <a-table :columns="depositColumns" :data-source="employeeDeposit" class="table-wrapper"
-               :expand-column-width="100" style="font-size: 11px;">
+      <a-table 
+        :columns="depositColumns" 
+        :data-source="employeeDeposit" 
+        class="table-wrapper"
+        rowKey="id"
+        :expandedRowKeys="expandedRowKey ? [expandedRowKey] : []"
+        @expand="onExpand"
+        style="font-size: 11px;">
         <template #expandedRowRender="{ record }">
           <a-flex justify="flex-start" gap="middle" align="center">
-            <a-flex vertical style="font-size: 11px;">
-              <p>
-                <b>Note: </b> {{ record.note }}
-              </p>
-              <p>
-                <b>Bank Name: </b> {{ record.bank_name.name }}
-              </p>
-              <p>
-                <b>Bank Code: </b> {{ record.bank_code }}
-              </p>
-              <p>
-                <b>Account Number: </b> {{ record.accountno }}
-              </p>
-              <p>
-                <b>Account Name: </b> {{ record.accountname }}
-              </p>
-            </a-flex>
-            <a-flex vertical style="font-size: 11px;">
-              <p>
-                <b>Updated By: </b> {{ record.updated_by }}
-              </p>
-              <p>
-                <b>Updated At: </b> {{ record.updated_at }}
-              </p>
-            </a-flex>
-            <a-flex gap="small" style="font-size: 11px;">
-              <b>Action: </b> <a-button type="primary" success>Pay</a-button> <a-button type="primary" danger>Delete</a-button>
-            </a-flex>
+            
           </a-flex>
         </template>
         <template #expandColumnTitle>
@@ -150,7 +129,15 @@ const apiUrl = config.public.apiBase;
 const open = ref<boolean>(false);
 const confirmLoading = ref<boolean>(false);
 const authStore = useAuthStore();
+const expandedRowKey = ref<number | null>(null);
 
+const onExpand = (expanded: boolean, record: any) => {
+  if (expanded) {
+    expandedRowKey.value = record.id;  // Expand the clicked row
+  } else {
+    expandedRowKey.value = null;  // Collapse the row if already expanded
+  }
+};
 
 const addAccountModal = () => {
   open.value = true;
@@ -179,21 +166,59 @@ const processBankAccounts = (accounts) => {
 };
 
 const depositColumns = [
-  { title: 'Request User', dataIndex: 'user', key: 'user' },
-  { title: 'Amount', dataIndex: 'amount', key: 'amount' },
-  { title: 'Status', dataIndex: 'status', key: 'status' },
-  { title: 'Created At', dataIndex: 'created_at', key: 'created_at' },
+  { 
+    title: 'Request User', 
+    dataIndex: 'user', 
+    key: 'user',
+    customRender: ({ record }) => {
+      return record.user.username
+    },
+  },
+  { 
+    title: 'Amount', 
+    dataIndex: 'amount', 
+    key: 'amount',
+    customRender: ({ text }) => {
+      return Intl.NumberFormat().format(text);
+    }  
+  },
+  { 
+    title: 'Status', 
+    dataIndex: 'status', 
+    key: 'status',
+    customRender: ({ record }) => {
+      return record.status ? 'Done' : 'Pending';
+    }  
+  },
+  { 
+    title: 'Created At', 
+    dataIndex: 'created_at', 
+    key: 'created_at',
+    customRender: ({ text }) => {
+      return dayjs(text).format('DD/MM/YYYY HH:mm:ss'); // Format the date
+    } 
+  },
 ];
 
 const bankAccountColumns = [
-  { title: 'Account Number', dataIndex: 'account_number', key: 'account_number' },
+  { 
+    title: 'Account Number', 
+    dataIndex: 'account_number', 
+    key: 'account_number',
+    customRender: ({ record }) => {
+      return h('div', [
+        h('div', record.account_number), // Display account number
+        h('div', { style: { fontSize: '11px', color: '#888', fontStyle: 'italic' } }, `(${record.account_name})`), // Display account name in italics
+      ]);
+    },
+  },
   { 
     title: 'Bank Name', 
     dataIndex: 'bank_name', 
     key: 'bank_name',
     customRender: ({ record }) => {
-      return record.bank_name.name
-    }
+      return record.bank_name.name;
+    },
   },
   { 
     title: 'Balance', 
@@ -204,7 +229,14 @@ const bankAccountColumns = [
       return h('span', { style: { color } }, Intl.NumberFormat().format(text)); // Format balance with commas
     }
   },
-  { title: 'User', dataIndex: 'user', key: 'user' },
+  { 
+    title: 'User', 
+    dataIndex: 'user', 
+    key: 'user',
+    customRender: ({ record }) => {
+      return record.user.username;
+    },
+  },
   { 
     title: 'Last Update', 
     dataIndex: 'updated_at', 
