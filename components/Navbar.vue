@@ -4,7 +4,9 @@
       <!-- Logo Section -->
       <a-flex>
         <div class="logo">
-          <img src="/logo.png" alt="Logo"/>
+          <NuxtLink to="/">
+            <img src="/logo.png" alt="Logo"/>
+          </NuxtLink>
         </div>
       </a-flex>
 
@@ -37,10 +39,18 @@
           <template #overlay>
             <a-menu>
               <a-menu-item>
-                <NuxtLink to="/withdrawal">Withdrawal</NuxtLink>
+                <NuxtLink to="/withdrawal">
+                  <a-button type="text" class="icon-button">
+                    <span class="button-text">Withdrawal</span>
+                  </a-button>
+                </NuxtLink>
               </a-menu-item>
               <a-menu-item>
-                <NuxtLink to="/">Settle</NuxtLink>
+                <NuxtLink to="/settle">
+                  <a-button type="text" class="icon-button">
+                    <span class="button-text">Settle</span>
+                  </a-button>
+                </NuxtLink>
               </a-menu-item>
             </a-menu>
           </template>
@@ -49,13 +59,17 @@
         <!-- Employee Dropdown -->
         <a-dropdown :trigger="['click']" :placement="bottomRight" :arrow="{ pointAtCenter: true }">
           <a-button type="text" class="icon-button">
-            <TeamOutlined/>
+            <ContactsTwoTone />
             <span class="button-text">Employee</span>
           </a-button>
           <template #overlay>
             <a-menu>
               <a-menu-item>
-                <NuxtLink to="/deposit">Deposit</NuxtLink>
+                <NuxtLink to="/deposit">
+                  <a-button type="text" class="icon-button">
+                    <span class="button-text">Deposit</span>
+                  </a-button>
+                </NuxtLink>
               </a-menu-item>
             </a-menu>
           </template>
@@ -64,16 +78,24 @@
         <!-- Language Dropdown -->
         <a-dropdown :trigger="['click']" :placement="bottomRight" :arrow="{ pointAtCenter: true }">
           <a-button type="text" class="icon-button">
-            <TeamOutlined/>
+            <InsuranceTwoTone />
             <span class="button-text">Language</span>
           </a-button>
           <template #overlay>
             <a-menu>
               <a-menu-item>
-                <NuxtLink to="/">English</NuxtLink>
+                <NuxtLink to="/">
+                  <a-button type="text" class="icon-button">
+                    <span class="button-text">English</span>
+                  </a-button>
+                </NuxtLink>
               </a-menu-item>
               <a-menu-item>
-                <NuxtLink to="/">Tiếng Việt</NuxtLink>
+                <NuxtLink to="/">
+                  <a-button type="text" class="icon-button">
+                    <span class="button-text">Tiếng Việt</span>
+                  </a-button>
+                </NuxtLink>
               </a-menu-item>
             </a-menu>
           </template>

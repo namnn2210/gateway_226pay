@@ -1,5 +1,5 @@
 <template>
-  <a-flex class="statistic" justify="space-evenly" wrap="wrap">
+  <a-flex class="statistic" gap="small" justify="space-evenly" wrap="wrap">
     <a-card class="stat-card">
       <a-statistic title="Total" :value="totalFinal" style="margin-right: 50px"/>
       <a-row :gutter="18">
@@ -50,7 +50,7 @@
     </a-card>
   </a-flex>
 
-  <a-flex class="statistic" justify="space-evenly" wrap="wrap">
+  <a-flex class="statistic" justify="space-evenly" wrap="wrap" gap="small">
     <!-- Bank IN Table -->
     <a-card class="stat-card">
       <a-flex wrap="wrap" justify="space-between" align="center">
@@ -84,7 +84,7 @@
     </a-card>
   </a-flex>
 
-  <a-flex class="statistic" justify="space-evenly" wrap="wrap">
+  <a-flex class="statistic" justify="space-evenly" wrap="wrap" gap="small">
     <a-card class="stat-card">
       <template #title>Latest IN Transaction History</template>
       <a-table :columns="latestTransactionHistoryColumns" :data-source="latestInTransactions" class="table-wrapper"
@@ -396,20 +396,32 @@ onUnmounted(() => {
 
 
 <style scoped>
+/* Container for the statistics section */
+/* Container for the statistics section */
 .statistic {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
   margin-top: 20px;
 }
 
+/* Styling for each card in the statistics section */
 .stat-card {
-  width: 800px;
-  margin-bottom: 10px;
-  overflow: hidden; /* Prevent overflow */
+  flex: 1;                   /* Allow the card to take up available space */
+  margin-bottom: 10px;       /* Add space below each card */
+  max-width: 100%;           /* Ensure the card does not exceed its container's width */
+  overflow: hidden;          /* Prevent content overflow */
 }
 
-/* Add this class to control table overflow */
+/* Ensure the table wrapper takes full width and handles overflow */
 .table-wrapper {
-  max-width: 100%; /* Ensure table fits within card */
-  overflow-x: auto; /* Scroll horizontally if necessary */
+  width: 100%;               /* Ensure the wrapper takes full width */
+  overflow-x: auto;          /* Allow horizontal scrolling if necessary */
+}
+
+/* Ensure the table inside the card takes full width */
+.stat-card .ant-table {
+  width: 100% !important;    /* Force the table to take full width of the card */
 }
 
 /* Ensure long text in table cells wraps */
@@ -418,22 +430,34 @@ onUnmounted(() => {
   white-space: normal;
 }
 
-/* Optional media queries to adjust the layout for smaller screens */
-@media (max-width: 1439px) {
-  .stat-card {
-    width: 600px; /* Take full width on mobile */
-  }
-}
+/* Media queries for different screen sizes */
 
+/* Desktop and larger screens */
 @media (min-width: 1440px) {
   .stat-card {
-    width: 700px; /* Take full width on mobile */
+    width: 100%;             /* Ensure the card takes full width on larger screens */
+    margin-bottom: 10px;     /* Maintain margin at the bottom */
   }
 }
 
+/* Tablets and smaller screens */
+@media (max-width: 1439px) {
+  .stat-card {
+    width: 100%;             /* Ensure the card takes full width */
+    margin-bottom: 10px;     /* Maintain margin at the bottom */
+  }
+}
+
+/* Mobile screens */
 @media (max-width: 768px) {
   .stat-card {
-    width: 100%; /* Take full width on mobile */
+    width: 100%;             /* Take full width on mobile screens */
+    margin-bottom: 10px;     /* Maintain margin at the bottom */
+    flex-basis: 100%;        /* Ensure each card takes 100% of the row */
+  }
+
+  .statistic {
+    justify-content: center; /* Center cards on mobile screens */
   }
 }
 </style>

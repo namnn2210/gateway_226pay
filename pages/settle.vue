@@ -1,9 +1,9 @@
 <template>
   <div>
     <a-flex justify="center">
-      <a-card class="payout-card" title="Payout">
-        <a-button type="primary" @click="addPayouttModal">Add Payout</a-button>
-        <a-modal v-model:open="open" title="Add New Payout" :confirm-loading="confirmLoading" footer="">
+      <a-card class="payout-card" title="Settle Payout">
+        <a-button type="primary" @click="addPayouttModal">Add Settle</a-button>
+        <a-modal v-model:open="open" title="Add Settle" :confirm-loading="confirmLoading" footer="">
           <AddPayout @submit="handlePayoutSubmit"/>
         </a-modal>
         <a-flex >
@@ -87,7 +87,7 @@
                 <b>Bank Code: </b> {{ record.bankcode }}
               </p>
             </a-flex>
-            <a-flex vertical  style="font-size: 11px;">
+            <a-flex vertical style="font-size: 11px;">
               <p>
                 <b>Created At: </b> {{ record.created_at }}
               </p>
@@ -106,7 +106,7 @@
                 <b>Auto/Manual: </b> {{ record.is_auto ? 'Auto' : 'Manual' }}
               </p>
               <p>
-                <b>Action: </b> <a-button type="primary" v-if="!record.is_cancel && !record.status" @click="showPayModal" style="background-color: green;">Pay</a-button> <a-button type="primary" v-if="!record.status" @click="handleDelete(record)" danger>Delete</a-button> <a-button type="primary" v-if="!record.status" @click="handleMove(record)" style="background-color: yellow; color:black;">Move</a-button>
+                <b>Action: </b> <a-button type="primary" v-if="!record.is_cancel && !record.status" @click="showPayModal" style="background-color: green;">Pay</a-button> <a-button type="primary" v-if="!record.status" @click="handleDelete(record)" danger>Delete</a-button>
                 <a-modal v-model:open="payOpen" title="Payout Detail">
                   <template #footer>
                     <a-button key="back" @click="handleReport(record)" danger>Report</a-button>
@@ -261,20 +261,6 @@ const handleDelete = (record) => {
   });
 }
 
-const handleMove = (record) => {
-  Modal.confirm({
-    title: 'Are you sure move this payout?',
-    icon: createVNode(ExclamationCircleOutlined),
-    content: 'This cannot be undone',
-    async onOk() {
-      await movePayout(record)
-    },
-    onCancel() {
-      console.log('Cancel');
-    },
-  });
-}
-
 const layout = {
   labelCol: { span: 24 },
   wrapperCol: { span: 24 },
@@ -340,7 +326,7 @@ const handlePayoutSubmit = async (formData) => {
     confirmLoading.value = true;
     
     const accessToken = localStorage.getItem('token'); // Retrieve the access token
-    const response = await axios.post(`${apiUrl}/payout/add`, formData, {
+    const response = await axios.post(`${apiUrl}/settle/add`, formData, {
       headers: {
         Authorization: `Bearer ${accessToken}`, // Add authorization token
       },
@@ -414,7 +400,7 @@ const fetchPayouts = async () => {
       employee: formState.employee || '',      // Optional employee username
     });
 
-    const response = await axios.get(`${apiUrl}/payout/list`, {
+    const response = await axios.get(`${apiUrl}/settle/list`, {
       headers: {
         Authorization: `Bearer ${accessToken}`, // Include authorization header
       },
@@ -447,7 +433,7 @@ const updatePayout = async (record, updateType) => {
     }
 
     const response = await axios.post(
-      `${apiUrl}/payout/update_payout/${updateType}`,
+      `${apiUrl}/settle/update_payout/${updateType}`,
       updateData,
       {
         headers: {
@@ -481,7 +467,7 @@ const deletePayout = async (record) => {
     }
 
     const response = await axios.post(
-      `${apiUrl}/payout/delete_payout`,
+      `${apiUrl}/settle/delete_settle_payout`,
       deleteData,
       {
         headers: {
@@ -505,43 +491,12 @@ const deletePayout = async (record) => {
   }
 }
 
-const movePayout = async (record) => {
-  try {
-    const accessToken = localStorage.getItem('token'); // Ensure access token is retrieved
-    const deleteData = {
-      id:record.id
-    }
-
-    const response = await axios.post(
-      `${apiUrl}/payout/move_payout`,
-      deleteData,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`, // Include authorization header
-        },
-      }
-    );
-
-    if (response.status === 200) {
-      notification['success']({
-        message: 'Success',
-        description: `Payout is moved to settle!`,
-      });
-
-      // Reload the page after a short delay for user feedback
-      // processBankOpen.value = false;
-      await fetchPayouts();
-    }
-  } catch (error) {
-    console.error('Error updating payout:', error);
-  }
-}
 </script>
 
 <style scoped>
 .payout-card, .payout-form, .payoutTable {
-  margin-top: 20px;
   width: 1500px;
+  margin-top: 20px;
 }
 
 /* Media Queries for Mobile */
@@ -559,7 +514,7 @@ const movePayout = async (record) => {
   }
 }
 
-@media (min-width: 1280px) and (max-width: 1439px) {
+@media (min-width: 1280px) and (max-width: 1440px) {
   .payout-card {
     width: 1200px; /* Adjust width for larger screens within this range */
   }
