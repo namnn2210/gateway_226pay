@@ -89,13 +89,13 @@
             </a-flex>
             <a-flex vertical  style="font-size: 11px;">
               <p>
-                <b>Created At: </b> {{ record.created_at }}
+                <b>Created At: </b> {{ dayjs(record.created_at).format('DD/MM/YYYY HH:mm:ss') }}
               </p>
               <p>
                 <b>Created By: </b> {{ record.user.username }}
               </p>
               <p>
-                <b>Updated At: </b> {{ record.updated_at }}
+                <b>Updated At: </b> {{ dayjs(record.updated_at).format('DD/MM/YYYY HH:mm:ss') }}
               </p>
               <p>
                 <b>Updated By: </b> {{ record.updated_by ? record.updated_by.username : '' }}
@@ -162,7 +162,7 @@ import { useAuthStore } from '@/stores/auth'; // Import your Pinia store
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { useRuntimeConfig } from '#app';
-import { notification } from 'ant-design-vue';
+import { notification, Tag } from 'ant-design-vue';
 
 let totalResults = ref(0);
 let totalAmount = ref<number>(0);
@@ -306,10 +306,25 @@ const payoutColumns = [
     title: 'Status', 
     dataIndex: 'status', 
     key: 'status',
-    customRender: ({ status }: { status: boolean }) => {
-      return status 
-        ? createVNode('a-tag', { color: 'success' }, { default: () => 'DONE' })
-        : createVNode('a-tag', { color: 'processing' }, { default: () => 'PENDING' });
+    customRender: ({ record }) => {
+      let color = '';
+      let text = '';
+
+      if (record.is_cancel) {
+        color = 'red';
+        text = 'CANCELED';
+      } else if (record.is_report && !record.status) {
+        color = 'red';
+        text = 'REPORTED';
+      } else if (record.status) {
+        color = 'green';
+        text = 'DONE';
+      } else {
+        color = 'yellow';
+        text = 'PENDING';
+      }
+
+      return h(Tag, { color }, { default: () => text });
     }
   },
 ];

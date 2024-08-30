@@ -14,40 +14,26 @@
             style="font-size: 11px;"
           >
             <template #expandedRowRender="{ record }">
-          <a-flex justify="flex-start" gap="middle" align="center" >
-            <a-flex vertical style="font-size: 11px;">
-              <p>
-                <b>Note: </b> {{ record.note }}
-              </p>
-              <p>
-                <b>Bank Name: </b> {{ record.bankname }}
-              </p>
-              <p>
-                <b>Bank Code: </b> {{ record.bankcode }}
-              </p>
-              <p>
-                <b>Account Number: </b> {{ record.accountno }}
-              </p>
-              <p>
-                <b>Account Name: </b> {{ record.accountname }}
-              </p>
-            </a-flex>
-            <a-flex vertical>
-              <p>
-                <b>Updated By: </b> {{ record.updated_by.username }}
-              </p>
-              <p>
-                <b>Updated At: </b> {{ record.updated_at }}
-              </p>
-            </a-flex>
-            <a-flex gap="small">
-              <b>Action: </b> <a-button type="primary" v-if="!record.status" success>Pay</a-button> <a-button type="primary" danger>Delete</a-button>
-            </a-flex>
-          </a-flex>
-        </template>
-        <template #expandColumnTitle>
-
-        </template>
+              <a-flex justify="flex-start" gap="middle" align="center">
+                <a-flex vertical style="font-size: 11px;">
+                  <p><b>Note: </b> {{ record.note }}</p>
+                  <p><b>Bank Name: </b> {{ record.bankname }}</p>
+                  <p><b>Bank Code: </b> {{ record.bankcode }}</p>
+                  <p><b>Account Number: </b> {{ record.accountno }}</p>
+                  <p><b>Account Name: </b> {{ record.accountname }}</p>
+                </a-flex>
+                <a-flex vertical style="font-size: 11px;">
+                  <p><b>Updated By: </b> {{ record.updated_by.username }}</p>
+                  <p><b>Updated At: </b> {{ record.updated_at }}</p>
+                </a-flex>
+                <a-flex gap="small" style="font-size: 11px;">
+                  <b>Action: </b> 
+                  <a-button type="primary" v-if="!record.status" success>Pay</a-button> 
+                  <a-button type="primary" danger>Delete</a-button>
+                </a-flex>
+              </a-flex>
+            </template>
+            <template #expandColumnTitle></template>
           </a-table>
         </a-flex>
       </a-card>
@@ -56,10 +42,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, onUnmounted, h, createVNode } from 'vue';
+import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { useRuntimeConfig } from '#app';
+import { Tag } from 'ant-design-vue';
+
 let employeeDeposit = ref([]);
 const config = useRuntimeConfig();
 const apiUrl = config.public.apiBase;
@@ -67,47 +55,41 @@ const expandedRowKey = ref<number | null>(null);
 
 const onExpand = (expanded: boolean, record: any) => {
   if (expanded) {
-    expandedRowKey.value = record.id;  // Expand the clicked row
+    expandedRowKey.value = record.id;
   } else {
-    expandedRowKey.value = null;  // Collapse the row if already expanded
+    expandedRowKey.value = null;
   }
 };
 
 const depositColumns = [
-  { 
-    title: 'Request User', 
-    dataIndex: 'user', 
+  {
+    title: 'Request User',
+    dataIndex: 'user',
     key: 'user',
-    customRender: ({ record }) => {
-      return record.user.username;
-    } 
+    customRender: ({ record }) => record.user.username
   },
-  { 
-    title: 'Amount', 
-    dataIndex: 'amount', 
+  {
+    title: 'Amount',
+    dataIndex: 'amount',
     key: 'amount',
-    customRender: ({ text }) => {
-      return h('span', Intl.NumberFormat().format(text));
-    } 
+    customRender: ({ text }) => Intl.NumberFormat().format(text)
   },
-  { 
-    title: 'Status', 
-    dataIndex: 'status', 
+  {
+    title: 'Status',
+    dataIndex: 'status',
     key: 'status',
-    customRender: ({ status }: { status: boolean }) => {
-      return status 
-        ? createVNode('a-tag', { color: 'processing' }, { default: () => 'PENDING' })
-        : createVNode('a-tag', { color: 'success' }, { default: () => 'DONE' });
-    } 
+    customRender: ({ record }) => {
+      const color = record.status ? 'green' : 'yellow';
+      const text = record.status ? 'DONE' : 'PENDING';
+      return h(Tag, { color }, { default: () => text });
+    }
   },
-  { 
-    title: 'Created At', 
-    dataIndex: 'created_at', 
+  {
+    title: 'Created At',
+    dataIndex: 'created_at',
     key: 'created_at',
-    customRender: ({ text }) => {
-      return dayjs(text).format('DD/MM/YYYY HH:mm:ss'); // Format the date
-    } 
-  },
+    customRender: ({ text }) => dayjs(text).format('DD/MM/YYYY HH:mm:ss')
+  }
 ];
 
 onMounted(async () => {
@@ -119,39 +101,51 @@ const fetchEmployeeDeposit = async () => {
   try {
     const response = await axios.get(`${apiUrl}/employee/employee_deposit`, {
       headers: {
-        Authorization: `Bearer ${accessToken}`,  // Include access token in headers
+        Authorization: `Bearer ${accessToken}`,
       },
     });
-    console.log(response.data.data.list_deposit)
     employeeDeposit.value = response.data.data.list_deposit;
   } catch (error) {
     console.error('Error fetching employee deposit:', error);
   }
 };
-
 </script>
 
-<style>
-/* Media Queries for Mobile */
+<style scoped>
 .deposit-card {
   width: 1500px;
   margin-top: 20px;
 }
+
 .deposit-table {
-  width: 1500px;
+  width: 100%;  /* Ensure the table takes the full width of its container */
 }
 
+/* Ensure the table wrapper also respects the full width */
+.table-wrapper {
+  width: 100%;   /* Ensure the wrapper takes the full width */
+  overflow-x: auto; /* Allow horizontal scrolling if necessary */
+}
+
+/* Make sure all table cells can expand to fill available space */
+.ant-table {
+  width: 100%;  /* Ensure the entire table takes up 100% of its container */
+}
+
+/* Ensure no overflow issues with the table cells */
+.ant-table-cell {
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+/* Media Queries for Mobile */
 @media (max-width: 768px) {
   .deposit-card {
-    width: 100% !important;
+    width: 100% !important; /* Card takes full width on mobile */
   }
 
-  .payout-form {
-    width: 100%;
-  }
-
-  .payoutTable {
-    width: 100% !important;
+  .deposit-table {
+    width: 100% !important; /* Table also takes full width */
   }
 }
 
@@ -160,17 +154,8 @@ const fetchEmployeeDeposit = async () => {
     width: 1200px; /* Adjust width for larger screens within this range */
   }
 
-  .payout-form {
-    width: 1200px; /* Ensure the form adjusts accordingly */
-  }
-
-  .payoutTable {
-    width: 1200px; /* Ensure the table adjusts accordingly */
-  }
-
-  /* You can adjust the gutter spacing or form item layout if needed */
-  .payout-form .ant-col {
-    padding: 0 16px; /* Example adjustment to form columns' padding */
+  .deposit-table {
+    width: 100%; /* Ensure the table adjusts accordingly */
   }
 }
 </style>
