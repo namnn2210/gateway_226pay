@@ -9,7 +9,7 @@ export default defineNuxtConfig({
     ],
     runtimeConfig: {
         public: {
-            apiBase: process.env.API_BASE || 'http://15.235.131.24:8000'
+            apiBase: process.env.API_BASE || 'https://restapi.226pay.com'
         }
     },
 })
