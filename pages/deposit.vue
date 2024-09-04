@@ -1,7 +1,7 @@
 <template>
   <div>
     <a-flex justify="center">
-      <a-card class="deposit-card" title="List Deposit">
+      <a-card class="deposit-card" title="Danh sách nạp tiền">
         <a-flex>
           <a-table 
             class="deposit-table table-wrapper" 
@@ -16,20 +16,20 @@
             <template #expandedRowRender="{ record }">
               <a-flex justify="flex-start" gap="middle" align="center">
                 <a-flex vertical style="font-size: 11px;">
-                  <p><b>Note: </b> {{ record.note }}</p>
-                  <p><b>Bank Name: </b> {{ record.bankname }}</p>
-                  <p><b>Bank Code: </b> {{ record.bankcode }}</p>
-                  <p><b>Account Number: </b> {{ record.accountno }}</p>
-                  <p><b>Account Name: </b> {{ record.accountname }}</p>
+                  <p><b>Ghi chú: </b> {{ record.note }}</p>
+                  <p><b>Tên ngân hàng: </b> {{ record.bankname }}</p>
+                  <p><b>Mã ngân hàng: </b> {{ record.bankcode }}</p>
+                  <p><b>Số tài khoản: </b> {{ record.accountno }}</p>
+                  <p><b>Tên tài khoản: </b> {{ record.accountname }}</p>
                 </a-flex>
                 <a-flex vertical style="font-size: 11px;">
-                  <p><b>Updated By: </b> {{ record.updated_by.username }}</p>
-                  <p><b>Updated At: </b> {{ record.updated_at }}</p>
+                  <p><b>Người cập nhật: </b> {{ record.updated_by.username }}</p>
+                  <p><b>Giờ cập nhật: </b> {{ record.updated_at }}</p>
                 </a-flex>
                 <a-flex gap="small" style="font-size: 11px;">
                   <b>Action: </b> 
-                  <a-button type="primary" v-if="!record.status" success>Pay</a-button> 
-                  <a-button type="primary" danger>Delete</a-button>
+                  <a-button type="primary" v-if="!record.status" success>Thanh toán</a-button> 
+                  <a-button type="primary" danger>Xóa</a-button>
                 </a-flex>
               </a-flex>
             </template>
@@ -63,19 +63,19 @@ const onExpand = (expanded: boolean, record: any) => {
 
 const depositColumns = [
   {
-    title: 'Request User',
+    title: 'Người yêu cầu',
     dataIndex: 'user',
     key: 'user',
     customRender: ({ record }) => record.user.username
   },
   {
-    title: 'Amount',
+    title: 'Số tiền',
     dataIndex: 'amount',
     key: 'amount',
     customRender: ({ text }) => Intl.NumberFormat().format(text)
   },
   {
-    title: 'Status',
+    title: 'Trạng thái',
     dataIndex: 'status',
     key: 'status',
     customRender: ({ record }) => {
@@ -85,7 +85,7 @@ const depositColumns = [
     }
   },
   {
-    title: 'Created At',
+    title: 'Ngày khởi tạo',
     dataIndex: 'created_at',
     key: 'created_at',
     customRender: ({ text }) => dayjs(text).format('DD/MM/YYYY HH:mm:ss')

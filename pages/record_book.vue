@@ -11,12 +11,12 @@
         >
           <a-row :gutter="24">
             <a-col :span="12">
-              <a-form-item name="search" label="Search">
+              <a-form-item name="search" label="Tìm kiếm">
                 <a-input v-model:value="formState[`text`]" placeholder="Search" style="width: 100%" />
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item name="start_end_date" label="Choose Date">
+              <a-form-item name="start_end_date" label="Chọn ngày">
                 <a-range-picker
                   v-model:value="formState['start_end_date']"
                   show-time
@@ -28,7 +28,7 @@
             </a-col>
           </a-row>
           <a-button :loading="loading" type="primary" html-type="submit" :icon="h(SearchOutlined)" block>
-            Search
+            Tìm kiếm
           </a-button>
         </a-form>
 
@@ -48,10 +48,10 @@
                 <a-flex justify="flex-start" gap="middle" align="center">
                   <a-flex vertical style="font-size: 11px;">
                     <p>
-                      <b>Transaction Number: </b> {{ record.transaction_number }}
+                      <b>Mã giao dịch: </b> {{ record.transaction_number }}
                     </p>
                     <p>
-                      <b>Memo: </b> {{ record.description }}
+                      <b>Nội dung: </b> {{ record.description }}
                     </p>
                   </a-flex>
                 </a-flex>
@@ -68,16 +68,16 @@
               :expandedRowKeys="expandedRowKeyOut ? [expandedRowKeyOut] : []"
               @expand="onExpandOut"
               style="font-size: 11px;"
-              :scroll="{ x: 800 }" <!-- Enable horizontal scrolling -->
+              :scroll="{ x: 800 }"
             >
               <template #expandedRowRender="{ record }">
                 <a-flex justify="flex-start" gap="middle" align="center">
                   <a-flex vertical style="font-size: 11px;">
                     <p>
-                      <b>Transaction Number: </b> {{ record.transaction_number }}
+                      <b>Mã giao dịch: </b> {{ record.transaction_number }}
                     </p>
                     <p>
-                      <b>Memo: </b> {{ record.description }}
+                      <b>Nội dung: </b> {{ record.description }}
                     </p>
                   </a-flex>
                 </a-flex>
@@ -133,7 +133,7 @@ const onExpandOut = (expanded: boolean, record: any) => {
 };
 
 const transactionHistoryColumns = [
-  { title: 'Account Number', dataIndex: 'account_number', key: 'account_number_1' },
+  { title: 'Số tài khoản', dataIndex: 'account_number', key: 'account_number_1' },
   {
     title: 'Amount',
     dataIndex: 'amount',
@@ -144,16 +144,16 @@ const transactionHistoryColumns = [
     },
   },
   {
-    title: 'Date',
+    title: 'Ngày giao dịch',
     dataIndex: 'transaction_date',
     key: 'transaction_date',
     customRender: ({ text }) => {
       return dayjs(text).format('DD/MM/YYYY HH:mm:ss'); // Format the date
     },
   },
-  { title: 'Transfer Code', dataIndex: 'transfer_code', key: 'transfer_code' },
-  { title: 'Memo', dataIndex: 'description', key: 'description' },
-  { title: 'Status', dataIndex: 'status', key: 'status' },
+  { title: 'Mã giao dịch', dataIndex: 'transfer_code', key: 'transfer_code' },
+  { title: 'Nội dung', dataIndex: 'description', key: 'description' },
+  { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
 ];
 
 const onFinish = async (values: any) => {
@@ -199,7 +199,7 @@ const fetchRecord = async () => {
 
 <style>
 .record-card {
-  width: 1500px;
+  width: 1200px;
   margin-top: 20px;
 }
 

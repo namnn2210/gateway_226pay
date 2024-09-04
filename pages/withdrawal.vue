@@ -2,8 +2,8 @@
   <div>
     <a-flex justify="center">
       <a-card class="payout-card" title="Payout">
-        <a-button type="primary" @click="addPayouttModal">Add Payout</a-button>
-        <a-modal v-model:open="open" title="Add New Payout" :confirm-loading="confirmLoading" footer="">
+        <a-button type="primary" @click="addPayouttModal">Thêm lệnh rút không bill</a-button>
+        <a-modal v-model:open="open" title="Thêm lệnh rút không bill" :confirm-loading="confirmLoading" footer="">
           <AddPayout @submit="handlePayoutSubmit"/>
         </a-modal>
         <a-flex >
@@ -17,7 +17,7 @@
           >
             <a-row :gutter="isMobile ? 8 : 24">
               <a-col :span="isMobile ? 24 : 12">
-                <a-form-item name="start_end_date" label="Choose Date">
+                <a-form-item name="start_end_date" label="Chọn ngày giờ">
                   <a-range-picker
                     v-model:value="formState['start_end_date']"
                     show-time
@@ -28,26 +28,26 @@
                 </a-form-item>
               </a-col>
               <a-col :span="isMobile ? 24 : 12">
-                <a-form-item name="search" label="Search">
+                <a-form-item name="search" label="Tìm kiếm">
                   <a-input v-model:value="formState[`text`]" placeholder="Search" style="width: 100%"></a-input>
                 </a-form-item>
               </a-col>
             </a-row>
             <a-row :gutter="isMobile ? 8 : 24">
               <a-col :span="isMobile ? 24 : 12">
-                <a-form-item name="status" label="Status">
+                <a-form-item name="status" label="Trạng thái">
                   <a-select v-model:value="formState[`status`]" style="width: 100%">
-                    <a-select-option value="Pending">Pending</a-select-option>
-                    <a-select-option value="Done">Done</a-select-option>
-                    <a-select-option value="Canceled">Canceled</a-select-option>
-                    <a-select-option value="Reported">Reported</a-select-option>
+                    <a-select-option value="Pending">Chờ xử lí</a-select-option>
+                    <a-select-option value="Done">Hoàn thành</a-select-option>
+                    <a-select-option value="Canceled">Đã hủy</a-select-option>
+                    <a-select-option value="Reported">Đã báo cáo</a-select-option>
                   </a-select>
                 </a-form-item>
               </a-col>
               <a-col :span="isMobile ? 24 : 12">
-                <a-form-item label="User">
+                <a-form-item label="Nhân viên">
                   <a-select v-model:value="formState[`employee`]" style="width: 100%">
-                    <a-select-option value='All'>All</a-select-option>
+                    <a-select-option value='All'>Tất cả</a-select-option>
                     <a-select-option v-for="user in users" :key="user.id" :value="user.username">
                       {{ user.username }}
                     </a-select-option>
@@ -55,7 +55,7 @@
                 </a-form-item>
               </a-col>
             </a-row>
-            <a-button :loading="loading" type="primary" html-type="submit" :icon="h(SearchOutlined)" block>Search</a-button>
+            <a-button :loading="loading" type="primary" html-type="submit" :icon="h(SearchOutlined)" block>Tìm kiếm</a-button>
           </a-form>
         </a-flex>
         <a-table 
@@ -72,49 +72,49 @@
             <a-flex justify="flex-start" gap="middle" align="center">
             <a-flex vertical style="font-size: 11px;">
               <p>
-                <b>Amount: </b> {{ record.money }}
+                <b>Số tiền: </b> {{ record.money }}
               </p>
               <p>
-                <b>Account Number: </b> {{ record.accountno }}
+                <b>Số tài khoản: </b> {{ record.accountno }}
               </p>
               <p>
-                <b>Account Name: </b> {{ record.accountname }}
+                <b>Tên tài khoản: </b> {{ record.accountname }}
               </p>
               <p>
-                <b>Bank Name: </b> {{ record.bankname }}
+                <b>Tên ngân hàng: </b> {{ record.bankname }}
               </p>
               <p>
-                <b>Bank Code: </b> {{ record.bankcode }}
+                <b>Mã ngân hàng: </b> {{ record.bankcode }}
               </p>
             </a-flex>
             <a-flex vertical  style="font-size: 11px;">
               <p>
-                <b>Created At: </b> {{ dayjs(record.created_at).format('DD/MM/YYYY HH:mm:ss') }}
+                <b>Ngày khởi tạo: </b> {{ dayjs(record.created_at).format('DD/MM/YYYY HH:mm:ss') }}
               </p>
               <p>
-                <b>Created By: </b> {{ record.user.username }}
+                <b>Người khởi tạo: </b> {{ record.user.username }}
               </p>
               <p>
-                <b>Updated At: </b> {{ dayjs(record.updated_at).format('DD/MM/YYYY HH:mm:ss') }}
+                <b>Ngày cập nhật: </b> {{ dayjs(record.updated_at).format('DD/MM/YYYY HH:mm:ss') }}
               </p>
               <p>
-                <b>Updated By: </b> {{ record.updated_by ? record.updated_by.username : '' }}
+                <b>Người cập nhật: </b> {{ record.updated_by ? record.updated_by.username : '' }}
               </p>
             </a-flex>
             <a-flex vertical style="font-size: 11px;">
               <p>
-                <b>Auto/Manual: </b> {{ record.is_auto ? 'Auto' : 'Manual' }}
+                <b>Tự động/Thủ công: </b> {{ record.is_auto ? 'Tự động' : 'Thủ công' }}
               </p>
               <p>
-                <b>Action: </b> <a-button type="primary" v-if="!record.is_cancel && !record.status" @click="showPayModal" style="background-color: green;">Pay</a-button> <a-button type="primary" v-if="!record.status" @click="handleDelete(record)" danger>Delete</a-button> <a-button type="primary" v-if="!record.status" @click="handleMove(record)" style="background-color: yellow; color:black;">Move</a-button>
+                <b>Hành động: </b> <a-button type="primary" v-if="!record.is_cancel && !record.status" @click="showPayModal" style="background-color: green;">Thanh toán</a-button> <a-button type="primary" v-if="!record.status" @click="handleDelete(record)" danger>Xóa</a-button> <a-button type="primary" v-if="!record.status" @click="handleMove(record)" style="background-color: yellow; color:black;">Chuyển</a-button>
                 <a-modal v-model:open="payOpen" title="Payout Detail">
                   <template #footer>
-                    <a-button key="back" @click="handleReport(record)" danger>Report</a-button>
-                    <a-button key="back" @click="handleCancel(record)">Cancel</a-button>
-                    <a-button key="submit" type="primary" :loading="payLoading" @click="showProcessBankModal">Done</a-button>
+                    <a-button key="back" @click="handleReport(record)" danger>Báo cáo</a-button>
+                    <a-button key="back" @click="handleCancel(record)">Hủy</a-button>
+                    <a-button key="submit" type="primary" :loading="payLoading" @click="showProcessBankModal">Hoàn thành</a-button>
                     <a-modal v-if="listBanks.length" v-model:open="processBankOpen" title="Process Bank">
                       <template #footer>
-                        <a-button key="submit" type="primary" :loading="processBankLoading" @click="handleDone(record)">Done</a-button>
+                        <a-button key="submit" type="primary" :loading="processBankLoading" @click="handleDone(record)">Hoàn thành</a-button>
                       </template>
                       <!-- Only render the select dropdown if banks are loaded -->
                       <a-select v-if="listBanks.length" v-model="processBank" style="width: 100%">
@@ -139,10 +139,10 @@
           <template #title>
             <a-row :gutter="24">
               <a-col :span="12">
-                <b>Total Results: </b> {{ totalResults }}
+                <b>Tổng số kết quả: </b> {{ totalResults }}
               </a-col>
               <a-col :span="12">
-                <b>Total Amount: </b> {{ totalAmount }}
+                <b>Tổng số tiền: </b> {{ totalAmount }}
               </a-col>
             </a-row>
           </template>
@@ -300,10 +300,10 @@ const formState = reactive({
 });
 
 const payoutColumns = [
-  { title: 'Order ID', dataIndex: 'orderid', key: 'orderid' },
+  { title: 'Mã đơn hàng', dataIndex: 'orderid', key: 'orderid' },
   { title: 'CID', dataIndex: 'scode', key: 'scode' },
   { 
-    title: 'Status', 
+    title: 'Trạng thái', 
     dataIndex: 'status', 
     key: 'status',
     customRender: ({ record }) => {
@@ -312,16 +312,16 @@ const payoutColumns = [
 
       if (record.is_cancel) {
         color = 'red';
-        text = 'CANCELED';
+        text = 'Đã hủy';
       } else if (record.is_report && !record.status) {
         color = 'red';
-        text = 'REPORTED';
+        text = 'Đã báo cáo';
       } else if (record.status) {
         color = 'green';
-        text = 'DONE';
+        text = 'Hoàn thành';
       } else {
         color = 'yellow';
-        text = 'PENDING';
+        text = 'Chờ xử lí';
       }
 
       return h(Tag, { color }, { default: () => text });
@@ -379,7 +379,6 @@ const handlePayoutSubmit = async (formData) => {
     confirmLoading.value = false;
   }
 };
-
 
 
 // Function to fetch users from API
@@ -555,8 +554,8 @@ const movePayout = async (record) => {
 
 <style scoped>
 .payout-card, .payout-form, .payoutTable {
-  margin-top: 20px;
   width: 1500px;
+  margin-top: 20px;
 }
 
 /* Media Queries for Mobile */
@@ -574,7 +573,7 @@ const movePayout = async (record) => {
   }
 }
 
-@media (min-width: 1280px) and (max-width: 1439px) {
+@media (min-width: 1280px) and (max-width: 1440px) {
   .payout-card {
     width: 1200px; /* Adjust width for larger screens within this range */
   }

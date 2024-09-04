@@ -1,7 +1,7 @@
 <template>
   <a-flex class="statistic" gap="small" justify="space-evenly" wrap="wrap">
     <a-card class="stat-card">
-      <a-statistic title="Total" :value="totalFinal" style="margin-right: 50px"/>
+      <a-statistic title="Tổng tiền" :value="totalFinal" style="margin-right: 50px"/>
       <a-row :gutter="18">
         <a-col :span="12">
           <a-statistic
@@ -30,7 +30,8 @@
       </a-row>
     </a-card>
     <a-card class="stat-card">
-      <a-table 
+      <template v-if="authStore.user.is_superuser">
+        <a-table 
         :columns="depositColumns" 
         :data-source="employeeDeposit" 
         class="table-wrapper"
@@ -47,6 +48,37 @@
 
         </template>
       </a-table>
+      </template>
+      <template v-else>
+        <a-flex direction="column" gap="small" vertical>
+          <!-- Create Deposit Request Button -->
+          <a-button type="primary" @click="addDepositRequestModal">Tạo lệnh nạp tiền</a-button>
+          
+          <!-- Start/End Session Button -->
+          <a-button 
+            :type="sessionActive ? 'danger' : 'primary'" 
+            :style="{ backgroundColor: sessionActive ? '#cf1322' : '#3f8600', borderColor: sessionActive ? '#cf1322' : '#3f8600' }"
+            @click="toggleSession">
+            {{ sessionActive ? 'Kết thúc phiên làm việc' : 'Bắt đầu phiên làm việc' }}
+          </a-button>
+        </a-flex>
+
+        <!-- Confirm Start/End Session Modal -->
+        <a-modal 
+          v-model:open="isConfirmModalVisible" 
+          :title="confirmAction === 'start' ? 'Bắt đầu phiên làm việc' : 'Kết thúc phiên làm việc'"
+          :confirm-loading="confirmLoading" 
+          @ok="handleConfirmOk" 
+          @cancel="handleConfirmCancel">
+          <p>Bạn có chắc muốn {{ confirmAction === 'start' ? 'bắt đầu' : 'kết thúc' }} phiên làm việc?</p>
+        </a-modal>
+
+        <!-- Add Deposit Modal -->
+        <a-modal v-model:open="openDeposit" title="Add New Deposit" :confirm-loading="confirmDepositLoading" @ok="handleDepositOk">
+          <AddDeposit @submit="handleDepositSubmit"/>
+        </a-modal>
+      </template>
+
     </a-card>
   </a-flex>
 
@@ -54,8 +86,8 @@
     <!-- Bank IN Table -->
     <a-card class="stat-card">
       <a-flex wrap="wrap" justify="space-between" align="center">
-        <a-statistic title="Bank IN" :value="totalIn" style="margin-right: 50px"/>
-        <a-button type="primary" @click="addAccountModal">Add Bank Account</a-button>
+        <a-statistic title="Ngân hàng VÀO" :value="totalIn" style="margin-right: 50px"/>
+        <a-button type="primary" @click="addAccountModal">Thêm tài khoản</a-button>
         <a-modal v-model:open="open" title="Add New Bank Account" :confirm-loading="confirmLoading" @ok="handleOk">
           <AddBank @submit="handleFormSubmit"/>
         </a-modal>
@@ -72,7 +104,7 @@
 
     <!-- Bank OUT Table -->
     <a-card class="stat-card">
-      <a-statistic title="Bank OUT" :value="totalOut" style="margin-right: 50px"/>
+      <a-statistic title="Ngân hàng RA" :value="totalOut" style="margin-right: 50px"/>
       <a-table :columns="bankAccountColumns" :data-source="bankAccountsOut" class="table-wrapper" row-key="id" size="middle" style="font-size: 11px;">
         <template #bodyCell="{ column, record }">
           <!-- Switch for OUT accounts -->
@@ -86,13 +118,13 @@
 
   <a-flex class="statistic" justify="space-evenly" wrap="wrap" gap="small">
     <a-card class="stat-card">
-      <template #title>Latest IN Transaction History</template>
+      <template #title>Giao dịch VÀO gần nhất</template>
       <a-table :columns="latestTransactionHistoryColumns" :data-source="latestInTransactions" class="table-wrapper"
                size="middle" style="font-size: 11px;">
       </a-table>
     </a-card>
     <a-card class="stat-card">
-      <template #title>Latest OUT Transaction History</template>
+      <template #title>Giao dịch RA gần nhất</template>
       <a-table :columns="latestTransactionHistoryColumns" :data-source="latestOutTransactions" class="table-wrapper"
                size="middle" style="font-size: 11px;">
       </a-table>
@@ -107,6 +139,7 @@ import axios from 'axios';
 import { useRuntimeConfig } from '#app';
 import AddBank from '@/components/AddBank.vue'
 import { useAuthStore } from '@/stores/auth';
+import { Tag } from 'ant-design-vue';
 
 let transactionIntervalId: number | undefined;
 let depositIntervalId: number | undefined;
@@ -121,15 +154,70 @@ let totalIn = ref(0);
 let totalOut = ref(0);
 let totalFinal = ref(0)
 let newBankAccountData = ref(null);
+let newDepositData = ref(null);
 let amountIn = ref(0);
 let amountOut = ref(0);
 
 const config = useRuntimeConfig();
 const apiUrl = config.public.apiBase;
 const open = ref<boolean>(false);
+const openDeposit = ref<boolean>(false);
 const confirmLoading = ref<boolean>(false);
+const confirmDepositLoading = ref<boolean>(false);
 const authStore = useAuthStore();
 const expandedRowKey = ref<number | null>(null);
+
+const sessionActive = ref(false);
+const isConfirmModalVisible = ref(false);
+const confirmAction = ref<'start' | 'end'>('start');
+
+const toggleSession = () => {
+  if (sessionActive.value) {
+    confirmAction.value = 'end';
+  } else {
+    confirmAction.value = 'start';
+  }
+  isConfirmModalVisible.value = true;
+};
+
+const handleConfirmOk = async () => {
+  confirmLoading.value = true;
+
+  const accessToken = localStorage.getItem('token');
+  const sessionType = confirmAction.value === 'start' ? 'start' : 'end';
+
+  try {
+    const response = await axios.post(`${apiUrl}/employee/employee_session/${sessionType}`, {}, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    // Check if the response status is 200
+    if (response.status === 200) {
+      // Toggle the session state after a successful API call
+      sessionActive.value = !sessionActive.value;
+
+      // Close the modal
+      isConfirmModalVisible.value = false;
+    } else {
+      console.error(`Unexpected response status: ${response.status}`);
+      // Optionally handle non-200 responses (e.g., show a notification)
+    }
+
+  } catch (error) {
+    console.error(`Error during session ${sessionType}:`, error);
+    // Handle the error (e.g., show a notification)
+  } finally {
+    confirmLoading.value = false;
+  }
+};
+
+
+
+const handleConfirmCancel = () => {
+  isConfirmModalVisible.value = false;
+};
 
 const onExpand = (expanded: boolean, record: any) => {
   if (expanded) {
@@ -143,10 +231,19 @@ const addAccountModal = () => {
   open.value = true;
 };
 
+const addDepositRequestModal = () => {
+  openDeposit.value = true;
+}
+
 const handleFormSubmit = (formData) => {
   newBankAccountData.value = formData;  // Store form data
   console.log('New Bank Account Data:', newBankAccountData.value);
 };
+
+const handleDepositSubmit = (formData) => {
+  newDepositData.value = formData;
+  console.log('New Deposite Data', newDepositData.value)
+}
 
 const handleOk = () => {
   confirmLoading.value = true;
@@ -167,7 +264,7 @@ const processBankAccounts = (accounts) => {
 
 const depositColumns = [
   { 
-    title: 'Request User', 
+    title: 'Người yêu cầu', 
     dataIndex: 'user', 
     key: 'user',
     customRender: ({ record }) => {
@@ -175,7 +272,7 @@ const depositColumns = [
     },
   },
   { 
-    title: 'Amount', 
+    title: 'Số tiền', 
     dataIndex: 'amount', 
     key: 'amount',
     customRender: ({ text }) => {
@@ -183,15 +280,17 @@ const depositColumns = [
     }  
   },
   { 
-    title: 'Status', 
+    title: 'Trạng thái', 
     dataIndex: 'status', 
     key: 'status',
     customRender: ({ record }) => {
-      return record.status ? 'Done' : 'Pending';
-    }  
+      const color = record.status ? 'green' : 'yellow';
+      const text = record.status ? 'DONE' : 'PENDING';
+      return h(Tag, { color }, { default: () => text });
+    } 
   },
   { 
-    title: 'Created At', 
+    title: 'Ngày khởi tạo', 
     dataIndex: 'created_at', 
     key: 'created_at',
     customRender: ({ text }) => {
@@ -202,7 +301,7 @@ const depositColumns = [
 
 const bankAccountColumns = [
   { 
-    title: 'Account Number', 
+    title: 'Số tài khoản', 
     dataIndex: 'account_number', 
     key: 'account_number',
     customRender: ({ record }) => {
@@ -213,7 +312,7 @@ const bankAccountColumns = [
     },
   },
   { 
-    title: 'Bank Name', 
+    title: 'Ngân hàng', 
     dataIndex: 'bank_name', 
     key: 'bank_name',
     customRender: ({ record }) => {
@@ -221,7 +320,7 @@ const bankAccountColumns = [
     },
   },
   { 
-    title: 'Balance', 
+    title: 'Số dư', 
     dataIndex: 'balance', 
     key: 'balance', 
     customRender: ({ text, record }) => {
@@ -230,7 +329,7 @@ const bankAccountColumns = [
     }
   },
   { 
-    title: 'User', 
+    title: 'Người dùng', 
     dataIndex: 'user', 
     key: 'user',
     customRender: ({ record }) => {
@@ -238,7 +337,7 @@ const bankAccountColumns = [
     },
   },
   { 
-    title: 'Last Update', 
+    title: 'Cập nhật gần nhất', 
     dataIndex: 'updated_at', 
     key: 'updated_at',
     customRender: ({ text }) => {
@@ -246,14 +345,14 @@ const bankAccountColumns = [
     }
   
   },
-  { title: 'Action', key: 'action' },
+  { title: 'Hành động', key: 'action' },
 ];
 
 const latestTransactionHistoryColumns = [
-  { title: 'Account Number', dataIndex: 'account_number', key: 'account_number_1' },
-  { title: 'Reference Number', dataIndex: 'transaction_number', key: 'transaction_number' },
+  { title: 'Số tài khoản', dataIndex: 'account_number', key: 'account_number_1' },
+  { title: 'Mã giao dịch', dataIndex: 'transaction_number', key: 'transaction_number' },
   { 
-    title: 'Amount', 
+    title: 'Số tiền', 
     dataIndex: 'amount', 
     key: 'amount', 
     customRender: ({ text, record }) => {
@@ -261,9 +360,9 @@ const latestTransactionHistoryColumns = [
       return h('span', { style: { color } }, Intl.NumberFormat().format(text));
     } 
   },
-  { title: 'Date', dataIndex: 'transaction_date', key: 'transaction_date' },
-  { title: 'Memo', dataIndex: 'description', key: 'description' },
-  { title: 'Status', dataIndex: 'status', key: 'status' },
+  { title: 'Ngày giao dịch', dataIndex: 'transaction_date', key: 'transaction_date' },
+  { title: 'Nội dung', dataIndex: 'description', key: 'description' },
+  { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
 ];
 
 // Fetch function that includes the access token in the headers

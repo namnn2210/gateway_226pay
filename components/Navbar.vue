@@ -15,17 +15,19 @@
         <NuxtLink to="/">
           <a-button type="text" class="icon-button">
             <HomeTwoTone/>
-            <span class="button-text">Home</span>
+            <span class="button-text">Trang chủ</span>
           </a-button>
         </NuxtLink>
-        <a-button type="text" class="icon-button">
-          <PieChartTwoTone/>
-          <span class="button-text">Report</span>
-        </a-button>
+        <NuxtLink to="/report" v-if="authStore.user.is_superuser">
+          <a-button type="text" class="icon-button">
+            <PieChartTwoTone/>
+            <span class="button-text">Báo cáo</span>
+          </a-button>
+        </NuxtLink>
         <NuxtLink to="/record_book">
           <a-button type="text" class="icon-button">
             <BookTwoTone/>
-            <span class="button-text">Record Book</span>
+            <span class="button-text">Sổ giao dịch</span>
           </a-button>
         </NuxtLink>
         
@@ -41,14 +43,14 @@
               <a-menu-item>
                 <NuxtLink to="/withdrawal">
                   <a-button type="text" class="icon-button">
-                    <span class="button-text">Withdrawal</span>
+                    <span class="button-text">Không có bill</span>
                   </a-button>
                 </NuxtLink>
               </a-menu-item>
               <a-menu-item>
                 <NuxtLink to="/settle">
                   <a-button type="text" class="icon-button">
-                    <span class="button-text">Settle</span>
+                    <span class="button-text">Có bill</span>
                   </a-button>
                 </NuxtLink>
               </a-menu-item>
@@ -60,14 +62,21 @@
         <a-dropdown :trigger="['click']" :placement="bottomRight" :arrow="{ pointAtCenter: true }">
           <a-button type="text" class="icon-button">
             <ContactsTwoTone />
-            <span class="button-text">Employee</span>
+            <span class="button-text">Nhân viên</span>
           </a-button>
           <template #overlay>
             <a-menu>
               <a-menu-item>
                 <NuxtLink to="/deposit">
                   <a-button type="text" class="icon-button">
-                    <span class="button-text">Deposit</span>
+                    <span class="button-text">Lệnh nạp tiền</span>
+                  </a-button>
+                </NuxtLink>
+              </a-menu-item>
+              <a-menu-item>
+                <NuxtLink to="/working_session">
+                  <a-button type="text" class="icon-button">
+                    <span class="button-text">Lịch sử làm việc</span>
                   </a-button>
                 </NuxtLink>
               </a-menu-item>
@@ -79,7 +88,7 @@
         <a-dropdown :trigger="['click']" :placement="bottomRight" :arrow="{ pointAtCenter: true }">
           <a-button type="text" class="icon-button">
             <InsuranceTwoTone />
-            <span class="button-text">Language</span>
+            <span class="button-text">Ngôn ngữ</span>
           </a-button>
           <template #overlay>
             <a-menu>
@@ -113,8 +122,10 @@
               <a-menu-item>
                 <NuxtLink to="/">Thông tin tài khoản</NuxtLink>
               </a-menu-item>
-              <a-menu-item >
-                <NuxtLink to="/">Đăng xuất</NuxtLink>
+              <a-menu-item>
+                <a-button type="text" class="icon-button" @click="logout">
+                  <span class="button-text">Đăng xuất</span>
+                </a-button>
               </a-menu-item>
             </a-menu>
           </template>
@@ -134,6 +145,12 @@ const authStore = useAuthStore();
 
 // Avatar value
 const avatarValue = ref('');
+
+// Logout function
+const logout = () => {
+  authStore.logout();  // Call the logout method from the store
+  location.reload();  // Reload the page or navigate to the login page if necessary
+};
 
 onMounted(() => {
   authStore.loadUserFromLocalStorage(); // Load user from local storage
